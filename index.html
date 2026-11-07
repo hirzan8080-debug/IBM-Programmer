@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task List</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind custom config: extend palette -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                blue:    "#2563EB",
+                blueDark:"#1D4ED8",
+                orange:  "#F97316",
+                orangeHv:"#EA6C0A",
+              },
+            },
+            boxShadow: {
+              card: "0 4px 24px 0 rgba(37,99,235,0.08)",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body class="min-h-screen bg-slate-50 flex flex-col items-center py-10 px-4">
+
+    <!-- ===== HEADER ===== -->
+    <header class="w-full max-w-lg mb-8 text-center">
+      <div class="flex items-center justify-center gap-3 mb-1">
+        <!-- Clipboard icon (inline SVG) -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-brand-blue" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2
+                   M9 5a2 2 0 002 2h2a2 2 0 002-2
+                   M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Task List</h1>
+      </div>
+      <p class="text-sm text-slate-500">Stay organised. Get things done.</p>
+    </header>
+
+    <!-- ===== MAIN CARD ===== -->
+    <main class="w-full max-w-lg bg-white rounded-2xl shadow-card p-6 flex flex-col gap-6">
+
+      <!-- ----- ADD TASK FORM ----- -->
+      <section aria-label="Add new task">
+        <form id="task-form" class="flex gap-2" novalidate>
+          <input
+            id="task-input"
+            type="text"
+            placeholder="Add a new task…"
+            maxlength="120"
+            autocomplete="off"
+            class="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5
+                   text-sm text-slate-700 placeholder-slate-400
+                   focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent
+                   transition"
+            aria-label="Task description"
+          />
+          <button
+            type="submit"
+            class="rounded-xl bg-brand-blue px-5 py-2.5 text-sm font-semibold text-white
+                   hover:bg-brand-blueDark active:scale-95
+                   transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2"
+            aria-label="Add task"
+          >
+            Add
+          </button>
+        </form>
+        <!-- Inline validation message -->
+        <p id="form-error" class="mt-1.5 text-xs text-red-500 hidden" role="alert"></p>
+      </section>
+
+      <!-- ----- FILTER TABS ----- -->
+      <section aria-label="Filter tasks">
+        <div id="filter-tabs" class="flex rounded-xl bg-slate-100 p-1 gap-1" role="tablist">
+          <button data-filter="all"       role="tab" aria-selected="true"  class="filter-btn active-tab">All <span id="count-all"></span></button>
+          <button data-filter="active"    role="tab" aria-selected="false" class="filter-btn">Active <span id="count-active"></span></button>
+          <button data-filter="completed" role="tab" aria-selected="false" class="filter-btn">Completed <span id="count-completed"></span></button>
+        </div>
+      </section>
+
+      <!-- ----- TASK LIST ----- -->
+      <section aria-label="Task list" aria-live="polite">
+        <ul id="task-list" class="flex flex-col gap-2">
+          <!-- Tasks rendered by JS -->
+        </ul>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="hidden flex-col items-center justify-center py-10 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-slate-300 mb-3"
+               fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7
+                     a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2
+                     M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+          <p id="empty-msg" class="text-sm font-medium text-slate-400">No tasks yet. Add one above!</p>
+        </div>
+      </section>
+
+      <!-- ----- FOOTER CLEAR ----- -->
+      <footer class="flex items-center justify-end pt-2 border-t border-slate-100">
+        <button
+          id="clear-completed"
+          class="text-xs font-medium text-brand-orange hover:text-brand-orangeHv
+                 transition-colors duration-150 focus:outline-none focus:underline hidden"
+          aria-label="Clear all completed tasks"
+        >
+          Clear completed
+        </button>
+      </footer>
+
+    </main>
+
+    <!-- ===== EDIT MODAL ===== -->
+    <div id="edit-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-box">
+        <h2 id="modal-title" class="text-base font-semibold text-slate-800 mb-4">Edit Task</h2>
+        <input
+          id="edit-input"
+          type="text"
+          maxlength="120"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5
+                 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-blue
+                 focus:border-transparent transition mb-4"
+          aria-label="Edit task description"
+        />
+        <p id="edit-error" class="mb-3 text-xs text-red-500 hidden" role="alert"></p>
+        <div class="flex justify-end gap-2">
+          <button id="modal-cancel"
+            class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600
+                   hover:bg-slate-50 transition focus:outline-none focus:ring-2 focus:ring-slate-300">
+            Cancel
+          </button>
+          <button id="modal-save"
+            class="rounded-xl bg-brand-blue px-4 py-2 text-sm font-semibold text-white
+                   hover:bg-brand-blueDark active:scale-95 transition-all focus:outline-none
+                   focus:ring-2 focus:ring-brand-blue focus:ring-offset-2">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Script -->
+    <script src="script.js"></script>
+  </body>
+</html>
